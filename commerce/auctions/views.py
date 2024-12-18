@@ -1,15 +1,40 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
+from django import forms
 
-from .models import User
+from .models import User, AuctionList
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    return render(request, "auctions/index.html", {
+        "list": AuctionList.objects.all(),
+    })
 
+def auction(request, auction_id):
+    auction = AuctionList.objects.get(id=auction_id)
+    return render(request, 'auctions/auction.html', {
+        "auction": auction
+    })
+
+class AddListiningForm(forms.ModelForm):
+    class Meta:
+        model = AuctionList
+        fields = ['title', 'description', 'start_price']
+
+def add(request):
+    if request.method == 'POST':
+        form = AddListiningForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('index')
+    else:
+        form = AddListiningForm()
+    return render(request, "auctions/add.html", {
+        "form": form
+    })
 
 def login_view(request):
     if request.method == "POST":
