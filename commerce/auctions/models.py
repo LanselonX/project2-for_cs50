@@ -12,3 +12,11 @@ class AuctionList(models.Model):
 
     def __str__(self):
         return f"{self.title}: {self.description}: {self.start_price}"
+    
+
+class WatchList(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist')
+    auction_list = models.ManyToManyField(AuctionList, related_name='watchlist')
+
+    def __str__(self):
+        return f"{self.user.username}'s watchlist"

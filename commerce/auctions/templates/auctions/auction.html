@@ -8,4 +8,14 @@
         <li>Description: {{ auction.description }}</li>
         <li>Start Price: {{ auction.start_price }}</li>
     </ul>
+    {% if user.is_authenticated %}
+        <form action="{% url 'add_watchlist' auction.id %}" method="post">
+            {% csrf_token %}
+            {% if in_watchlist %}
+                <button type="submit">Remove from Watchlist</button>
+            {% else %}
+                <button type="submit">Add to Watchlist</button>
+            {% endif %}
+        </form>
+    {% endif %}
 {% endblock %}

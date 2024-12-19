@@ -1,11 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django import forms
+from django.contrib import messages
 
-from .models import User, AuctionList
+from .models import User, AuctionList, WatchList
 
 
 def index(request):
@@ -14,24 +15,47 @@ def index(request):
     })
 
 def auction(request, auction_id):
-    auction = AuctionList.objects.get(id=auction_id)
+    auc_list = AuctionList.objects.get(id=auction_id)
+    in_watchlist = False
+    if request.user.is_authenticated:
+        in_watchlist = WatchList.objects.filter(user = request.user, auction_list=auc_list).exists()
+
     return render(request, 'auctions/auction.html', {
-        "auction": auction
+        "auction": auc_list,
+        "in_watchlist": in_watchlist,
     })
 
-class AddListiningForm(forms.ModelForm):
+def add_watchlist(request, auction_id):
+    auc_list = get_object_or_404(AuctionList, id=auction_id)
+    watchlist, created = WatchList.objects.get_or_create(user=request.user)
+    if watchlist.auction_list.filter(id=auction_id).exists():
+        watchlist.auction_list.remove(auc_list)
+        messages.info(request, "deleted")
+    else:
+        watchlist.auction_list.add(auc_list)
+        messages.success(request, "success")
+    return redirect('watchlist')
+
+def watchlist(request): 
+    watchlist, created = WatchList.objects.get_or_create(user = request.user)
+    context = {
+        "all_watchlist": watchlist.auction_list.all()
+    }
+    return render(request, 'auctions/watchlist.html', context)
+
+class AddListingForm(forms.ModelForm):
     class Meta:
         model = AuctionList
         fields = ['title', 'description', 'start_price']
 
 def add(request):
     if request.method == 'POST':
-        form = AddListiningForm(request.POST)
+        form = AddListingForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('index')
     else:
-        form = AddListiningForm()
+        form = AddListingForm()
     return render(request, "auctions/add.html", {
         "form": form
     })
