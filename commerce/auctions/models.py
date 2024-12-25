@@ -1,5 +1,3 @@
-from tkinter.constants import CASCADE
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -13,6 +11,8 @@ class AuctionList(models.Model):
     start_price = models.IntegerField(null=False, blank=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auction_list", verbose_name="creator")
     current_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="winner")
 
     def __str__(self):
         return f"{self.title}: {self.description}: {self.start_price}"

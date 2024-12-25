@@ -26,5 +26,11 @@
             <button type="submit">Place for a bid</button>
         </form>
     {% endif %}
-
+    {% if user.is_authenticated and user == auction.creator %}
+        <form action="{% url 'close_auction' auction.id %}" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Close auction</button>
+        </form>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,20 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <h2>Active Listings: </h2>
+        {% for auction in list %}
+            <a href="{% url 'auction' auction.id %}">
+                <div>
+                    <h2>{{ auction.title }}</h2>
+                    <p>{{ auction.description }}</p>
+                    <p>Start price: {{ auction.start_price }}</p>
+                </div>
+            </a>
+        {% empty %}
+            <p>Auctions don't found</p>
+        {% endfor %}
+    {% else %}
+        To see active listings you need to be logged in
+    {% endif %}
+{% endblock %}
