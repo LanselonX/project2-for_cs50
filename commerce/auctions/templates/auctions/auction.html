@@ -33,4 +33,27 @@
             <button type="submit">Close auction</button>
         </form>
     {% endif %}
+    <div>
+        <h1>It's for commentary: </h1>
+        {% for comment in auction.comment_post.all %}
+            <p><strong>{{ comment.user.username }}</strong>: {{ comment.text }}</p>
+        {% endfor %}
+    </div>
+    <form method="post" action="{% url 'add_commentary' auction.id %}">
+        {% csrf_token %}
+        {{ commentForm.as_p }}
+        <button type="submit">Add Commentary</button>
+    </form>
+    <div>
+        <div>
+            <h1>Current category:</h1>
+            <p><strong>{{ auction.get_category_display }}</strong></p>
+            <h1>Changed categories: </h1>
+        </div>
+        <form action="{% url 'category' auction.id %}" method="post">
+            {% csrf_token %}
+            {{ choicesForm.as_p }}
+            <button type="submit">Save categories</button>
+        </form>
+    </div>
 {% endblock %}

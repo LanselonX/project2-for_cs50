@@ -5,6 +5,18 @@ from django.db import models
 class User(AbstractUser):
     pass
 
+# class Category(models.Model):
+#     CATEGORY_CHOICES = [
+#         ('art', 'Art'),
+#         ('electronic', 'Electronic'),
+#         ('cars', 'Cars'),
+#     ]
+#     key = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default="art", unique=True, verbose_name="Key")
+#     name = models.CharField(max_length=64, verbose_name='name')
+#
+#     def __str__(self):
+#         return self.name
+
 class AuctionList(models.Model):
     title = models.CharField(max_length=64, verbose_name="title")
     description = models.TextField(verbose_name="description")
@@ -13,10 +25,17 @@ class AuctionList(models.Model):
     current_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="winner")
+    image = models.ImageField(upload_to="images/", null=True, blank=True)
+    CATEGORY_CHOICES = [
+        ('art', 'Art'),
+        ('electronic', 'Electronic'),
+        ('cars', 'Cars'),
+    ]
+    category = models.CharField(max_length=32,choices=CATEGORY_CHOICES, verbose_name="category", default='art')
 
     def __str__(self):
         return f"{self.title}: {self.description}: {self.start_price}"
-    
+
 class Lot(models.Model):
     lot_author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="lot_author", verbose_name="lot_author")
     lot_info = models.ForeignKey(AuctionList, on_delete=models.CASCADE, verbose_name="lot_info")
@@ -32,3 +51,8 @@ class WatchList(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s watchlist"
+
+class Commentary(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comment_user')
+    auc_post = models.ForeignKey(AuctionList, on_delete=models.CASCADE, related_name='comment_post')
+    text = models.TextField(verbose_name="comment")
