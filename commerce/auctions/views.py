@@ -18,7 +18,27 @@ def index(request):
 def closed_auctions(request):
     check_auctions = AuctionList.objects.filter(is_active=False)
     return render(request, 'auctions/closed_auction.html', {
-        "list": check_auctions,
+        "list": check_auctions, 
+    })  
+
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = AuctionList
+        fields = ['image']
+
+def image_view(request, auction_id):
+    auction_list = get_object_or_404(AuctionList, id=auction_id)
+
+    if request.method == 'POST':
+        form = ImageForm(request.POST, request.FILES, instance=auction_list)
+        if form.is_valid():
+            form.save()
+            return redirect('auction', auction_id=auction_id)
+    else:
+        form = ImageForm(instance=auction_list)
+    return render(request, 'auctions/index.html', {
+        'auction': auction_list,
+        'form': form,
     })
 
 def auction(request, auction_id):
@@ -39,7 +59,8 @@ def auction(request, auction_id):
         "is_winner": is_winner,
         "commentForm": AddCommentaryForm(),
         "choicesForm": CategoriesForm(),
-    })
+        "imageForm": ImageForm(),
+    })  
 
 def watchlist(request):
     user_watchlist, created = WatchList.objects.get_or_create(user = request.user)
@@ -114,7 +135,6 @@ def close_auction(request, auction_id):
 
 def lot_bid(request, auction_id):
     listing = get_object_or_404(AuctionList, id=auction_id)
-
     if request.method == 'POST':
         form = AddLotForm(request.POST)
         if form.is_valid():

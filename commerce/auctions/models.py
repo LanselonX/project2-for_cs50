@@ -5,19 +5,12 @@ from django.db import models
 class User(AbstractUser):
     pass
 
-# class Category(models.Model):
-#     CATEGORY_CHOICES = [
-#         ('art', 'Art'),
-#         ('electronic', 'Electronic'),
-#         ('cars', 'Cars'),
-#     ]
-#     key = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default="art", unique=True, verbose_name="Key")
-#     name = models.CharField(max_length=64, verbose_name='name')
-#
-#     def __str__(self):
-#         return self.name
-
 class AuctionList(models.Model):
+    CATEGORY_CHOICES = [
+        ('art', 'Art'),
+        ('electronic', 'Electronic'),
+        ('cars', 'Cars'),
+    ]
     title = models.CharField(max_length=64, verbose_name="title")
     description = models.TextField(verbose_name="description")
     start_price = models.IntegerField(null=False, blank=False)
@@ -26,11 +19,6 @@ class AuctionList(models.Model):
     is_active = models.BooleanField(default=True)
     winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="winner")
     image = models.ImageField(upload_to="images/", null=True, blank=True)
-    CATEGORY_CHOICES = [
-        ('art', 'Art'),
-        ('electronic', 'Electronic'),
-        ('cars', 'Cars'),
-    ]
     category = models.CharField(max_length=32,choices=CATEGORY_CHOICES, verbose_name="category", default='art')
 
     def __str__(self):

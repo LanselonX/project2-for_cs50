@@ -1,4 +1,15 @@
 {% extends "auctions/layout.html" %}
+{% load static %}
+
+<!-- {% block extra_css %}
+    <style>
+        .auction-image {
+            height: 232px;
+            width: 220px;
+            object-fit: cover;
+        }
+    </style>
+{% endblock %} -->
 
 {% block body %}
     {% if user.is_authenticated %}
@@ -6,12 +17,19 @@
         {% for auction in list %}
             <a href="{% url 'auction' auction.id %}">
                 <div>
+                    {% if auction.image %}
+                        <img src="{{ auction.image.url }}" alt="Image of lot" class="image-index" />
+                    {% else %}
+                        <p>Image error</p>  
+                    {% endif %}
+                </div>
+                <div>
                     <h2>{{ auction.title }}</h2>
                     <p>{{ auction.description }}</p>
                     <p>Start price: {{ auction.start_price }}</p>
                 </div>
             </a>
-        {% empty %} 
+            {% empty %} 
             <p>Auctions don't found</p>
         {% endfor %}
     {% else %}

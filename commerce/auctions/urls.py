@@ -1,4 +1,6 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 
 from . import views
 
@@ -17,4 +19,5 @@ urlpatterns = [
     path("add_commentary", views.add_commentary, name="add_commentary"),
     path("add_commentary/<int:auction_id>", views.add_commentary, name="add_commentary"),
     path("category/<str:auction_id>", views.book, name="category"),
-]
+    path("image/<int:auction_id>", views.image_view, name="image"),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
