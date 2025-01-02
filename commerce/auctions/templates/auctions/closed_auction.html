@@ -2,18 +2,27 @@
 
 {% block body %}
     {% if user.is_authenticated %}
-        <h2>Active Listings: </h2>
-        {% for auction in list %}
-            <a href="{% url 'auction' auction.id %}">
-                <div>
-                    <h2>{{ auction.title }}</h2>
-                    <p>{{ auction.description }}</p>
-                    <p>Start price: {{ auction.start_price }}</p>
-                </div>
-            </a>
-        {% empty %}
-            <p>Auctions don't found</p>
-        {% endfor %}
+    <h2>Closed Auctions: </h2>
+    <div>
+    {% for auction in list %}
+        <div class="index-container">
+            <div class="image-container">
+                {% if auction.image %}
+                    <img src="{{ auction.image.url }}" alt="Image of lot" class="image-index" />
+                {% else %}
+                    <p>Image error</p>  
+                {% endif %}
+            </div>
+            <div class="text-container">
+                <h3>Title: {{ auction.title }}</h3>
+                <p>Winner: <strong>{{ auction.winner }}</strong></p>
+                <p>Price: {{ auction.start_price }}</p>
+            </div>
+        </div>
+    {% empty %} 
+        <p>Auctions don't found</p>
+    {% endfor %}
+    </div>
     {% else %}
         To see active listings you need to be logged in
     {% endif %}

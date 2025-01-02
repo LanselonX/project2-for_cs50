@@ -1,13 +1,11 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django import forms
 from django.contrib import messages
-
 from .models import User, AuctionList, WatchList, Lot, Commentary
-
+from .forms import AddListingForm, AddCommentaryForm, CloseAuctionForm, AddLotForm
 
 def index(request):
     active_auctions = AuctionList.objects.filter(is_active=True)
@@ -21,32 +19,15 @@ def closed_auctions(request):
         "list": check_auctions, 
     })  
 
-class ImageForm(forms.ModelForm):
-    class Meta:
-        model = AuctionList
-        fields = ['image']
-
-def image_view(request, auction_id):
-    auction_list = get_object_or_404(AuctionList, id=auction_id)
-
-    if request.method == 'POST':
-        form = ImageForm(request.POST, request.FILES, instance=auction_list)
-        if form.is_valid():
-            form.save()
-            return redirect('auction', auction_id=auction_id)
-    else:
-        form = ImageForm(instance=auction_list)
-    return render(request, 'auctions/index.html', {
-        'auction': auction_list,
-        'form': form,
-    })
-
 def auction(request, auction_id):
     auc_list = AuctionList.objects.get(id=auction_id)
     in_watchlist = False
     maximum_bid = Lot.objects.filter(lot_info=auc_list).order_by('-lot_bid').first()
+    current_price = maximum_bid.lot_bid if maximum_bid else auc_list.start_price
+
     if request.user.is_authenticated:
         in_watchlist = WatchList.objects.filter(user = request.user, auction_list=auc_list).exists()
+
     is_winner = False
     if not auc_list.is_active and auc_list.winner == request.user:
         is_winner = True
@@ -54,21 +35,19 @@ def auction(request, auction_id):
     return render(request, 'auctions/auction.html', {
         "auction": auc_list,
         "in_watchlist": in_watchlist,
-        "maximum_bid": maximum_bid.lot_bid if maximum_bid else None,
+        "current_price": current_price,
         "bidForm": AddLotForm(),
         "is_winner": is_winner,
         "commentForm": AddCommentaryForm(),
-        "choicesForm": CategoriesForm(),
-        "imageForm": ImageForm(),
     })  
 
 def watchlist(request):
     user_watchlist, created = WatchList.objects.get_or_create(user = request.user)
     active_watchlist = user_watchlist.auction_list.filter(is_active=True)
-    context = {
-        "all_watchlist": active_watchlist
-    }
-    return render(request, 'auctions/watchlist.html', context)
+
+    return render(request, 'auctions/watchlist.html', {
+        "all_watchlist": active_watchlist,
+    })
 
 def add_watchlist(request, auction_id):
     auc_list = AuctionList.objects.get(id=auction_id)
@@ -80,35 +59,6 @@ def add_watchlist(request, auction_id):
         user_watchlist.auction_list.add(auc_list)
         messages.success(request, "success")
     return redirect('watchlist')
-
-class AddListingForm(forms.ModelForm):
-    class Meta:
-        model = AuctionList
-        fields = ['title', 'description', 'start_price']
-
-class AddLotForm(forms.ModelForm):
-    class Meta:
-        model = Lot
-        fields = ['lot_bid']
-        labels = {
-            'lot_bid': 'Choose your maximum bid',
-        }
-
-class AddCommentaryForm(forms.ModelForm):
-    class Meta:
-        model = Commentary
-        fields = ['text']
-        labels ={
-            'text': 'Commentary',
-        }
-
-# class CloseAuctionForm(forms.Form):
-#     confirm = forms.BooleanField(label="confirm auction closure")
-class CloseAuctionForm(forms.ModelForm):
-    class Meta:
-        model = AuctionList
-        fields = ['is_active']
-
 
 def close_auction(request, auction_id):
     listing = get_object_or_404(AuctionList, id=auction_id)
@@ -139,14 +89,24 @@ def lot_bid(request, auction_id):
         form = AddLotForm(request.POST)
         if form.is_valid():
             bid = form.cleaned_data.get('lot_bid')
+            has_errors = False
+
             if bid <= 0:
                 messages.error(request, "Input an amount greater than 0")
+                has_errors = True
             else:
                 maximum_bid = Lot.objects.filter(lot_info=listing).order_by('-lot_bid').first()
 
-                if maximum_bid and bid <= maximum_bid.lot_bid:
-                    messages.error(request, "Amount is too low, check the current highest bid")
+                if maximum_bid:
+                    if bid <= maximum_bid.lot_bid:
+                        messages.error(request, "Maximum bid")
+                        has_errors = True      
                 else:
+                    if bid < listing.start_price:
+                        messages.error(request, "current price is less than starting price")                
+                        return redirect('auction', auction_id=auction_id)
+                    
+                if not has_errors:
                     new_bid = Lot(
                         lot_info=listing,
                         lot_author=request.user,
@@ -164,19 +124,16 @@ def lot_bid(request, auction_id):
     else:
         form = AddLotForm()
 
-    maximum_bid = Lot.objects.filter(lot_info=listing).order_by('-lot_bid').first()
-    in_watchlist = WatchList.objects.filter(user=request.user,auction_list=listing).exists() if request.user.is_authenticated else False
+    current_price = maximum_bid.lot_bid if maximum_bid else listing.start_price
 
     return render(request, 'auctions/auction.html', {
         "auction": listing,
         "bidForm": form,
-        "maximum_bid": maximum_bid.lot_bid if maximum_bid else None,
-        "in_watchlist": in_watchlist,
+        "current_price": current_price,
     })
 
 def add_commentary(request, auction_id):
     auction_info = get_object_or_404(AuctionList, id=auction_id)
-    # user_commentary, created = Commentary.objects.get_or_create(user=request.user)
     if request.method == 'POST':
         form = AddCommentaryForm(request.POST)
         if form.is_valid():
@@ -196,39 +153,21 @@ def add_commentary(request, auction_id):
         "comments": auction_info.comment_post.all(),
     })
 
-class CategoriesForm(forms.ModelForm):
-    class Meta:
-        model = AuctionList
-        fields = ['category']
-        widgets ={
-            'category': forms.Select(attrs={'class': 'form-control'}),
-        }
-
-def book(request, auction_id):
-    auction_info = get_object_or_404(AuctionList, id=auction_id)
-    if request.method == "POST":
-        form = CategoriesForm(request.POST, instance=auction_info)
-        if form.is_valid():
-            form.save()
-            return redirect('index')
-    else:
-        form = CategoriesForm(instance=auction_info)
-    return render(request, 'auctions/index.html', {
-        'auction': auction_info,
-        'form': form,
-    })
-
 def add(request):
-    if request.method == 'POST':
-        form = AddListingForm(request.POST)
+    if request.method == "POST":
+        form = AddListingForm(request.POST, request.FILES)
+
         if form.is_valid():
-            auction_save = form.save(commit=False)
-            auction_save.creator = request.user
-            auction_save.save()
-            return redirect('index')
+            auction_list = form.save(commit=False)
+            auction_list.creator = request.user
+            auction_list.save()
+
+            return redirect('auction', auction_id=auction_list.id)
     else:
         form = AddListingForm()
-    return render(request, 'auctions/add.html', {'form': form})
+    return render(request, 'auctions/add.html', {
+        'listingForm': form,
+    })
 
 def login_view(request):
     if request.method == "POST":

@@ -2,8 +2,65 @@ body {
     padding: 10px;
 }
 
-.image-index{
+.image-container {
+    display: flex;
+    margin: 0 64px;
+}
+
+.image-index {
     height: 232px;
     width: 220px;
+    border-radius: 4px;
     object-fit: cover;
+}
+
+.index-container {
+    display: flex;
+    margin-bottom: 24px;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.text-container {
+    color: black;
+    padding-top: 16px;
+}
+
+a.index-link {
+    text-decoration: none;
+}
+
+.comments-list {
+    max-width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.comments-list p {
+    margin: 10px 0;
+    word-wrap: break-word;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.comment-form .btn {
+    align-self: flex-start;
+}
+
+.auction-first-container {
+    margin-bottom: 8px;
+}
+
+.auction-last-container {
+    margin-top: 6px;
 }

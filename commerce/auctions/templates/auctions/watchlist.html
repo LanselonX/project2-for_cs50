@@ -1,17 +1,26 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h1>It's watch list</h1>
-
+    <h1>WatchList: </h1>
     {% if all_watchlist %}
-        <ul>
-            {% for auction in all_watchlist %}
-            <li>
-                <a href="{% url 'auction' auction.id %}">{{ auction.title }}</a>
-                {{ auction.start_price }}
-            </li>
-            {% endfor %}
-        </ul>
+        {% for auction in all_watchlist %}
+            <a class="index-link" href="{% url 'auction' auction.id %}">
+                <div class="index-container">
+                    <div class="image-container">
+                        {% if auction.image %}
+                            <img src="{{ auction.image.url }}" alt="Image of lot" class="image-index" />
+                        {% else %}
+                            <p>Image error</p>  
+                        {% endif %}
+                    </div>
+                    <div class="text-container">
+                        <h3>Title: {{ auction.title }}</h3>
+                        <p>Start price: {{ auction.start_price }}</p>
+                        <p>Created at: {{ auction.created_at }}</p>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
     {% else %}
         <p>Список отслеживаемых аукционов</p>
     {% endif %}

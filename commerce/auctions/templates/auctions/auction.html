@@ -2,73 +2,63 @@
 
 {% block body %}
     <div>
-    <h1>Auction: {{ auction.title }}</h1>
-    <ul>
-        <li>Title: {{ auction.title }}</li>
-        <li>Description: {{ auction.description }}</li>
-        <li>Start Price: {{ auction.start_price }}</li>
-        <li>Current Bid: {% if maximum_bid %}{{ maximum_bid }}{% else %}No bids yet{% endif %}</li>
-    </ul>
-    <p>The creator is: <strong>{{ auction.creator }}</strong></p>
-    {% if user.is_authenticated %}
-        <form action="{% url 'add_watchlist' auction.id %}" method="post">
-            {% csrf_token %}    
-            {% if in_watchlist %}
-                <button type="submit">Remove from Watchlist</button>
-            {% else %}
-                <button type="submit">Add to Watchlist</button>
-            {% endif %}
-        </form>
-        <h2>Place for a bid: </h2>
-        <form method="post" action="{% url 'lot_bid' auction.id %}">
-            {% csrf_token %}
-            {{ bidForm.as_p }}
-            <button type="submit">Place for a bid</button>
-        </form>
-    {% endif %}
-    {% if user.is_authenticated and user == auction.creator %}
-        <form action="{% url 'close_auction' auction.id %}" method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Close auction</button>
-        </form>
-    {% endif %}
-    <div>
-        <h1>It's for commentary: </h1>
-        {% for comment in auction.comment_post.all %}
-            <p><strong>{{ comment.user.username }}</strong>: {{ comment.text }}</p>
-        {% endfor %}
-    </div>
-    <form method="post" action="{% url 'add_commentary' auction.id %}">
-        {% csrf_token %}
-        {{ commentForm.as_p }}
-        <button type="submit">Add Commentary</button>
-    </form>
-    <div>
-        <div>
-            <h1>Current category:</h1>
-            <p><strong>{{ auction.get_category_display }}</strong></p>
-            <h1>Changed categories: </h1>
+        <div class="auction-first-container">
+            <h1>Listing: {{ auction.title }}</h1>
+            <form action="{% url 'add_watchlist' auction.id %}" method="post">
+                {% csrf_token %}
+                {% if in_watchlist %}
+                    <button type="submit" class="btn btn-secondary btn-sm">Watchlist</button>
+                {% else %}
+                    <button type="submit" class="btn btn-secondary btn-sm">Watchlist</button>
+                {% endif %}
+            </form>
         </div>
-        <form action="{% url 'category' auction.id %}" method="post">
-            {% csrf_token %}
-            {{ choicesForm.as_p }}
-            <button type="submit">Save categories</button>
-        </form>
-    </div>
-    <div>
-        <form method="post" enctype="multipart/form-data" action="{% url 'image' auction.id %}">
-            {% csrf_token %}
-            {{ imageForm.as_p }}
-            <button type="submit">Upload Image</button>
-        </form>
-    </div>
-    <div>
-        {% if auction.image %}
-            <img src="{{ auction.image.url }}" alt="Image of lot" />
-        {% else %}
-            <p>Image error</p>
-        {% endif %}
-    </div>
+        <div>
+            {% if auction.image %}
+                <img src="{{ auction.image.url }}" alt="Image of {{ auction.title }}" />
+            {% else %}
+                <p>Image don't found.</p>
+            {% endif %}
+        </div>
+        <div>
+            <p>Start Price: {{ auction.start_price }}</p>
+            <p>Current Bid: {{ current_price }}</p>
+        </div>
+        <div>
+            <form method="post" action="{% url 'lot_bid' auction.id %}">
+                {% csrf_token %}
+                {{ bidForm.as_p }}
+                <button type="submit" class="btn btn-primary">Place bid</button>
+            </form>
+        </div>
+        <div>
+            <h3>Details</h3>
+            <ul>
+                <li>Listed by: <strong>{{ auction.creator }}</strong></li>
+                <li>Category: <strong>{{ auction.get_category_display }}</strong></li>
+                <li>Description: {{ auction.description }}</li>
+            </ul>
+        </div>
+        <div>
+            <div class="comments-list">
+                {% for comment in auction.comment_post.all %}
+                    <p><strong>{{ comment.user.username }}</strong>: {{ comment.text }}</p>
+                {% endfor %}
+            </div>
+            <form method="post" action="{% url 'add_commentary' auction.id %}" class="comment-form">
+                {% csrf_token %}
+                {{ commentForm.as_p }}
+                <button type="submit" class="btn btn-primary">Add Commentary</button>
+            </form>
+        </div>
+        <div class="auction-last-container">
+            {% if user.is_authenticated and user == auction.creator %}
+                <form action="{% url 'close_auction' auction.id %}" method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-danger">Close auction</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
